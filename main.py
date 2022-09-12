@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File
+from fastapi import FastAPI, File, Form
 from segmentation import get_yolov5, get_image_from_bytes
 from starlette.responses import Response
 import io
@@ -6,8 +6,6 @@ from PIL import Image
 import json
 from fastapi.middleware.cors import CORSMiddleware
 
-
-model = get_yolov5()
 
 app = FastAPI(
     title="Custom YOLOV5 Machine Learning API",
@@ -50,7 +48,12 @@ def get_health():
 
 
 @app.post("/object-to-json")
-async def detect_food_return_json_result(file: bytes = File(...)):
+async def detect_food_return_json_result(file: bytes = File(...), project: str = Form(...)):
+    try:
+      model = get_yolov5(project)
+    except:
+      raise Exception('Invalid project code')
+
     input_image = get_image_from_bytes(file)
     results = model(input_image)
     detect_res = results.pandas().xyxy[0].to_json(orient="records")  # JSON img1 predictions
